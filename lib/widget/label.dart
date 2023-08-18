@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 
-import '../theme/extension/label_theme.dart';
-import '../theme/extension/ui_kit_theme.dart';
+import '../theme/label_theme.dart';
+import '../theme/svg_icon_theme.dart';
+import '../theme/ui_kit_theme.dart';
 
 class Label extends StatelessWidget {
   const Label({
     super.key,
     required this.text,
     this.icon,
+    this.iconTheme,
     this.textStyle,
     this.backgroundColor,
+    this.borderRadius,
     this.padding,
-    this.border,
   });
 
   final Widget text;
   final Widget? icon;
+  final SvgIconThemeData? iconTheme;
   final TextStyle? textStyle;
   final Color? backgroundColor;
+  final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? padding;
-  final BoxBorder? border;
 
   @override
   Widget build(BuildContext context) {
@@ -28,25 +31,59 @@ class Label extends StatelessWidget {
     final defaultTheme = LabelThemeData.fromDefaults(context);
 
     return Container(
-      padding: padding,
+      padding: _getPadding(labelTheme, defaultTheme),
       decoration: BoxDecoration(
         color: _getBackgroundColor(labelTheme, defaultTheme),
-        border: border,
+        borderRadius: _getBorderRadius(labelTheme, defaultTheme),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            icon!,
-            const SizedBox(width: 4),
-          ],
-          DefaultTextStyle.merge(
-            style: _getTextStyle(labelTheme, defaultTheme),
-            child: text,
-          ),
+          _buildIconAndSpacing(context, labelTheme, defaultTheme),
+          Flexible(
+            child: _buildText(context, labelTheme, defaultTheme),
+          )
         ],
       ),
     );
+  }
+
+  Widget _buildIconAndSpacing(
+    BuildContext context,
+    LabelThemeData? labelTheme,
+    LabelThemeData defaultTheme,
+  ) {
+    if (icon != null) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: SvgIconTheme.merge(
+          data: _getIconTheme(context, labelTheme, defaultTheme),
+          child: icon!,
+        ),
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildText(
+    BuildContext context,
+    LabelThemeData? labelTheme,
+    LabelThemeData defaultTheme,
+  ) {
+    return DefaultTextStyle.merge(
+      style: _getTextStyle(labelTheme, defaultTheme),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      child: text,
+    );
+  }
+
+  EdgeInsetsGeometry? _getPadding(
+    LabelThemeData? labelTheme,
+    LabelThemeData defaultTheme,
+  ) {
+    return padding ?? labelTheme?.padding ?? defaultTheme.padding;
   }
 
   Color? _getBackgroundColor(
@@ -58,10 +95,33 @@ class Label extends StatelessWidget {
         defaultTheme.backgroundColor;
   }
 
+  BorderRadius? _getBorderRadius(
+    LabelThemeData? labelTheme,
+    LabelThemeData defaultTheme,
+  ) {
+    return borderRadius ??
+        labelTheme?.borderRadius ??
+        defaultTheme.borderRadius;
+  }
+
   TextStyle? _getTextStyle(
     LabelThemeData? labelTheme,
     LabelThemeData defaultTheme,
   ) {
     return textStyle ?? labelTheme?.textStyle ?? defaultTheme.textStyle;
+  }
+
+  SvgIconThemeData? _getIconTheme(
+    BuildContext context,
+    LabelThemeData? labelTheme,
+    LabelThemeData defaultTheme,
+  ) {
+    if (iconTheme != null) {
+      return iconTheme?.merge(
+        labelTheme?.iconTheme ?? defaultTheme.iconTheme,
+      );
+    } else {
+      return labelTheme?.iconTheme ?? defaultTheme.iconTheme;
+    }
   }
 }
